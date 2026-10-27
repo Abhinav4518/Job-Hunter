@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abhinav's Cold Outreach Studio</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        slate: {
+                            850: '#131c2e',
+                            900: '#0b1120',
+                            950: '#060913',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #060913;
+            color: #e2e8f0;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b1120;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        .chip-active {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.2));
+            border-color: #10b981;
+            color: #34d399;
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
+        }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased selection:bg-emerald-500/30 selection:text-emerald-300">
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-slate-800/80 bg-slate-900/70 backdrop-blur-md sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                    <i data-lucide="zap" class="w-5 h-5 text-slate-950 stroke-[2.5]"></i>
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                        Abhinav's Cold Outreach Studio
+                        <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            IIIT Manipur '27 • 8.89 CGPA
+                        </span>
+                    </h1>
+                    <p class="text-xs text-slate-400 hidden sm:block">Enter Email + Role + Keywords → Auto-Tailor Pitch → 1-Click Send with PDF Resume</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <!-- Local Python Bridge Status Indicator -->
+                <div id="bridgeStatusBadge" onclick="checkBackendStatus(true)" class="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/90 border border-slate-700/80 text-xs font-medium transition hover:border-slate-600" title="Click to re-check local Python SMTP server on port 5000">
+                    <span id="bridgeDot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                    <span id="bridgeText" class="text-slate-300">Checking Local SMTP...</span>
+                </div>
+
+                <!-- Setup Python Server Modal Button -->
+                <button onclick="toggleServerModal(true)" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs sm:text-sm font-medium transition">
+                    <i data-lucide="terminal" class="w-4 h-4"></i>
+                    <span>1-Click SMTP Bridge</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Studio Grid -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+            <!-- LEFT COLUMN: TARGET INPUTS & KEYWORD ENGINE (5 Cols) -->
+            <section class="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl space-y-5">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="sliders" class="w-4 h-4 text-emerald-400"></i>
+                        <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-200">1. Target & Keywords</h2>
+                    </div>
+                    <button onclick="loadAiqonExample()" class="text-xs text-emerald-400 hover:text-emerald-300 underline underline-offset-4">
+                        Load Aiqon Example
+                    </button>
+                </div>
+
+                <!-- Recipient Email Input -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1.5">
+                        Recipient Email Address <span class="text-emerald-400">*</span>
+                    </label>
+                    <div class="relative">
+                        <i data-lucide="mail" class="w-4 h-4 text-slate-500 absolute left-3.5 top-3"></i>
+                        <input id="targetEmail" type="email" placeholder="e.g., info@aiqon.in or hiring@startup.com"
+                            oninput="handleEmailInput()"
+                            class="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition font-mono">
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-1">Auto-extracts company name from the email domain if left blank below.</p>
+                </div>
+
+                <!-- Company Name Input -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1.5">
+                            Company Name
+                        </label>
+                        <div class="relative">
+                            <i data-lucide="building-2" class="w-4 h-4 text-slate-500 absolute left-3.5 top-3"></i>
+                            <input id="companyName" type="text" placeholder="Auto-inferred (e.g. Aiqon)"
+                                oninput="markCompanyManual(); generatePitch();"
+                                class="w-full pl-10 pr-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition">
+                        </div>
+                    </div>
+
+                    <!-- Location / Mode Input -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1.5">
+                            Job Location / Mode
+                        </label>
+                        <div class="relative">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-slate-500 absolute left-3.5 top-3"></i>
+                            <input id="jobLocation" type="text" placeholder="e.g., Hyderabad / Remote / Delhi NCR"
+                                oninput="generatePitch()"
+                                class="w-full pl-10 pr-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Target Role Input + Quick Pills -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1.5">
+                        Role Applying For <span class="text-emerald-400">*</span>
+                    </label>
+                    <div class="relative mb-2">
+                        <i data-lucide="briefcase" class="w-4 h-4 text-slate-500 absolute left-3.5 top-3"></i>
+                        <input id="roleTitle" type="text" value="Software Engineering Intern"
+                            oninput="generatePitch()"
+                            class="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition">
+                    </div>
+                    <div class="flex flex-wrap gap-1.5">
+                        <button type="button" onclick="setRole('Software Engineering Intern')" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/70 transition">SWE Intern</button>
+                        <button type="button" onclick="setRole('Backend Developer Intern')" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/70 transition">Backend Intern</button>
+                        <button type="button" onclick="setRole('Full-Stack Developer Intern')" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/70 transition">Full-Stack Intern</button>
+                        <button type="button" onclick="setRole('Software Engineer (2027 New Grad / SDE-1)')" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/70 transition">SDE-1 (2027 Grad)</button>
+                        <button type="button" onclick="setRole('AI / Founding Engineer Intern')" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/70 transition">AI Engineer</button>
+                    </div>
+                </div>
+
+                <!-- Keywords & Tech Stack Selector -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-medium text-slate-300">
+                            Keywords & Requirements They Ask For
+                        </label>
+                        <button type="button" onclick="clearKeywords()" class="text-[11px] text-slate-400 hover:text-slate-200">Reset</button>
+                    </div>
+
+                    <!-- Quick Toggle Chips -->
+                    <div id="keywordChipsContainer" class="flex flex-wrap gap-1.5 mb-2.5"></div>
+
+                    <!-- Custom Keywords Input -->
+                    <div class="relative">
+                        <i data-lucide="hash" class="w-4 h-4 text-slate-500 absolute left-3.5 top-3"></i>
+                        <input id="customKeywords" type="text"
+                            placeholder="Add custom keywords (e.g., WebRTC, Docker, PostgreSQL, GraphQL)..."
+                            oninput="generatePitch()"
+                            class="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition">
+                    </div>
+                </div>
+
+                <!-- Pitch Style Selector -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1.5">
+                        Email Template Style
+                    </label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" id="style_referral" onclick="setTemplateStyle('referral')" class="px-3 py-2 rounded-xl border text-xs font-medium transition text-center">
+                            Referral / JD Match
+                        </button>
+                        <button type="button" id="style_yc" onclick="setTemplateStyle('yc')" class="px-3 py-2 rounded-xl border text-xs font-medium transition text-center">
+                            YC / Founder Direct
+                        </button>
+                        <button type="button" id="style_delhi" onclick="setTemplateStyle('delhi')" class="px-3 py-2 rounded-xl border text-xs font-medium transition text-center">
+                            Delhi NCR / India
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RIGHT COLUMN: LIVE EDITABLE EMAIL PREVIEW & 1-CLICK SEND (7 Cols) -->
+            <section class="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl flex flex-col space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-cyan-400"></i>
+                        <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-200">2. Live Tailored Email (Editable)</h2>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-slate-400">
+                        <i data-lucide="paperclip" class="w-3.5 h-3.5 text-emerald-400"></i>
+                        <span class="font-mono text-[11px] text-slate-300">AbhinavJhaIIITManipurResume.pdf</span>
+                    </div>
+                </div>
+
+                <!-- Subject Line -->
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="text-xs font-medium text-slate-400">Subject Line</label>
+                        <button type="button" onclick="copyText('emailSubject', 'Subject copied!')" class="text-[11px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
+                            <i data-lucide="copy" class="w-3 h-3"></i> Copy Subject
+                        </button>
+                    </div>
+                    <input id="emailSubject" type="text"
+                        class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-medium text-white focus:outline-none focus:border-cyan-500 transition">
+                </div>
+
+                <!-- Email Body Textarea -->
+                <div class="flex-1 flex flex-col">
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="text-xs font-medium text-slate-400">Email Body (Auto-prioritizes projects matching your selected keywords)</label>
+                        <button type="button" onclick="copyText('emailBody', 'Email body copied!')" class="text-[11px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
+                            <i data-lucide="copy" class="w-3 h-3"></i> Copy Body
+                        </button>
+                    </div>
+                    <textarea id="emailBody" rows="16"
+                        class="w-full p-4 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-slate-200 font-mono leading-relaxed focus:outline-none focus:border-cyan-500 transition resize-y"></textarea>
+                </div>
+
+                <!-- Action Buttons Bar -->
+                <div class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <!-- 1-Click Direct Send via Python SMTP Bridge -->
+                    <button id="sendDirectBtn" type="button" onclick="sendEmailNow()"
+                        class="flex-1 flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/20 transition transform active:scale-[0.99]">
+                        <i data-lucide="send" class="w-4 h-4 stroke-[2.5]"></i>
+                        <span>Send Email + Attach PDF Resume Now</span>
+                    </button>
+
+                    <!-- Open in Gmail Web Compose Fallback -->
+                    <button type="button" onclick="openInGmailCompose()"
+                        class="flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs sm:text-sm font-semibold transition"
+                        title="Opens Gmail Compose in a new tab with recipient, subject, and body pre-filled">
+                        <i data-lucide="external-link" class="w-4 h-4 text-cyan-400"></i>
+                        <span>Open in Gmail</span>
+                    </button>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- SENT OUTREACH HISTORY LOG -->
+        <section class="mt-8 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="history" class="w-4 h-4 text-emerald-400"></i>
+                    <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-200">Sent Outreach History</h2>
+                    <span id="sentCountBadge" class="px-2 py-0.5 text-xs rounded-full bg-slate-800 text-emerald-400 font-mono">0</span>
+                </div>
+                <button onclick="clearHistoryLog()" class="text-xs text-slate-400 hover:text-rose-400 transition">
+                    Clear Log
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                    <thead>
+                        <tr class="border-b border-slate-800 text-slate-400 text-xs uppercase">
+                            <th class="py-2.5 px-3">Time</th>
+                            <th class="py-2.5 px-3">Recipient Email</th>
+                            <th class="py-2.5 px-3">Company</th>
+                            <th class="py-2.5 px-3">Role</th>
+                            <th class="py-2.5 px-3">Keywords Used</th>
+                            <th class="py-2.5 px-3">Method</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody" class="divide-y divide-slate-800/60 text-slate-300"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL: LOCAL PYTHON SMTP BRIDGE SCRIPT -->
+    <div id="serverModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
+                        <i data-lucide="terminal" class="w-4 h-4 text-indigo-400"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white">1-Click Local SMTP Server (`mailer_server.py`)</h3>
+                        <p class="text-xs text-slate-400">Run this in your `~/job-hunter-bot` folder so this UI sends emails + attaches your PDF directly.</p>
+                    </div>
+                </div>
+                <button onclick="toggleServerModal(false)" class="text-slate-400 hover:text-white p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="text-xs text-slate-300 space-y-2">
+                <p>Browsers cannot attach local PDFs or connect to `smtp.gmail.com:465` directly without a tiny local relay. Save this file as <code class="text-emerald-400 font-mono">mailer_server.py</code> in your <code class="text-emerald-400 font-mono">~/job-hunter-bot</code> folder (it uses the exact same <code class="text-cyan-400 font-mono">.env</code> and <code class="text-cyan-400 font-mono">AbhinavJhaIIITManipurResume.pdf</code> you already have!):</p>
+                <div class="flex items-center justify-between bg-slate-950 px-3 py-2 rounded-lg border border-slate-800 font-mono text-[11px] text-emerald-400">
+                    <span>pip install flask flask-cors && python mailer_server.py</span>
+                    <button onclick="copyRawText('pip install flask flask-cors && python mailer_server.py', 'Command copied!')" class="text-slate-400 hover:text-white">Copy Cmd</button>
+                </div>
+            </div>
+
+            <div class="relative flex-1 overflow-hidden flex flex-col">
+                <div class="flex items-center justify-between bg-slate-950 px-4 py-2 border-t border-x border-slate-800 rounded-t-xl">
+                    <span class="text-xs font-mono text-slate-400">mailer_server.py</span>
+                    <button onclick="copyText('pythonServerCode', 'mailer_server.py code copied!')" class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-medium">
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Python Code
+                    </button>
+                </div>
+                <textarea id="pythonServerCode" readonly rows="14" class="w-full p-4 bg-slate-950 border border-slate-800 rounded-b-xl font-mono text-xs text-emerald-300 focus:outline-none resize-none overflow-y-auto">import os
+import smtplib
+from email.message import EmailMessage
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from dotenv import load_dotenv
+
+load_dotenv()
+
+app = Flask(__name__)
+CORS(app)
+
+SMTP_EMAIL = os.getenv("SMTP_EMAIL", "abhinavjha542@gmail.com")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+RESUME_PATH = os.getenv("RESUME_PATH", "AbhinavJhaIIITManipurResume.pdf")
+
+@app.route("/status", methods=["GET"])
+def status():
+    return jsonify({
+        "ok": True,
+        "email": SMTP_EMAIL,
+        "resume_found": os.path.exists(RESUME_PATH)
+    })
+
+@app.route("/send", methods=["POST"])
+def send_mail():
+    data = request.json or {}
+    to_email = data.get("to", "").strip()
+    subject = data.get("subject", "").strip()
+    body = data.get("body", "").strip()
+
+    if not to_email or not subject or not body:
+        return jsonify({"ok": False, "error": "Missing email, subject, or body"}), 400
+
+    msg = EmailMessage()
+    msg["From"] = f"Abhinav Kumar Jha <{SMTP_EMAIL}>"
+    msg["To"] = to_email
+    msg["Subject"] = subject
+    msg.set_content(body)
+
+    if os.path.exists(RESUME_PATH):
+        with open(RESUME_PATH, "rb") as f:
+            msg.add_attachment(
+                f.read(),
+                maintype="application",
+                subtype="pdf",
+                filename=os.path.basename(RESUME_PATH)
+            )
+    else:
+        return jsonify({"ok": False, "error": f"Resume not found at {RESUME_PATH}"}), 404
+
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as server:
+            server.login(SMTP_EMAIL, SMTP_PASSWORD)
+            server.send_message(msg)
+        print(f"[SENT] -> {to_email} | {subject}")
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+if __name__ == "__main__":
+    print(f"[*] Abhinav's SMTP Bridge running on http://localhost:5000 (Resume: {RESUME_PATH})")
+    app.run(host="127.0.0.1", port=5000)</textarea>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="checkBackendStatus(true); toggleServerModal(false);" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs transition">
+                    Test Connection & Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- APPLICATION LOGIC -->
+    <script>
+        // --- 1. STATE & KEYWORD PRESETS ---
+        const PRESET_KEYWORDS = [
+            { id: 'ts', label: 'TypeScript / JS', active: true },
+            { id: 'python', label: 'Python', active: true },
+            { id: 'react', label: 'React / Next.js', active: true },
+            { id: 'node', label: 'Node.js / Express', active: true },
+            { id: 'ai', label: 'AI / ML & LLMs', active: true },
+            { id: 'rest', label: 'REST APIs / Git / Web', active: false },
+            { id: 'cpp', label: 'C++17 / Multithreading', active: false },
+            { id: 'six_months', label: '6-Month Internship', active: true },
+            { id: 'us_aus_tz', label: 'US / Australia Timezone', active: true },
+            { id: 'immediate', label: 'Immediate Joiner', active: false }
+        ];
+
+        let currentStyle = 'referral'; // 'referral' | 'yc' | 'delhi'
+        let companyManuallyEdited = false;
+        let backendOnline = false;
+
+        const GENERIC_DOMAINS = new Set([
+            'gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com',
+            'icloud.com', 'proton.me', 'protonmail.com', 'zoho.com'
+        ]);
+
+        // --- 2. INITIALIZATION ---
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            renderKeywordChips();
+            updateStyleButtons();
+            loadAiqonExample();
+            renderHistoryTable();
+            checkBackendStatus(false);
+            setInterval(() => checkBackendStatus(false), 12000);
+        });
+
+        // --- 3. AUTO-COMPANY INFERENCE FROM EMAIL ---
+        function markCompanyManual() {
+            const val = document.getElementById('companyName').value.trim();
+            companyManuallyEdited = val.length > 0;
+        }
+
+        function inferCompanyFromEmail(email) {
+            if (!email || !email.includes('@')) return '';
+            const domainPart = email.split('@')[1].toLowerCase().trim();
+            if (!domainPart || GENERIC_DOMAINS.has(domainPart)) return '';
+            const rootName = domainPart.split('.')[0].replace(/[-_]/g, ' ');
+            if (!rootName) return '';
+            return rootName.charAt(0).toUpperCase() + rootName.slice(1);
+        }
+
+        function handleEmailInput() {
+            const emailVal = document.getElementById('targetEmail').value.trim();
+            if (!companyManuallyEdited) {
+                const inferred = inferCompanyFromEmail(emailVal);
+                if (inferred) {
+                    document.getElementById('companyName').value = inferred;
+                }
+            }
+            generatePitch();
+        }
+
+        function setRole(roleName) {
+            document.getElementById('roleTitle').value = roleName;
+            generatePitch();
+        }
+
+        function setTemplateStyle(style) {
+            currentStyle = style;
+            updateStyleButtons();
+            generatePitch();
+        }
+
+        function updateStyleButtons() {
+            const styles = ['referral', 'yc', 'delhi'];
+            styles.forEach(s => {
+                const btn = document.getElementById('style_' + s);
+                if (s === currentStyle) {
+                    btn.className = 'px-3 py-2 rounded-xl border text-xs font-semibold transition text-center bg-emerald-500/15 border-emerald-500 text-emerald-300';
+                } else {
+                    btn.className = 'px-3 py-2 rounded-xl border text-xs font-medium transition text-center bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200';
+                }
+            });
+        }
+
+        // --- 4. KEYWORD CHIPS RENDERER ---
+        function renderKeywordChips() {
+            const container = document.getElementById('keywordChipsContainer');
+            container.innerHTML = '';
+            PRESET_KEYWORDS.forEach(kw => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.onClick = () => toggleKeyword(kw.id);
+                btn.onclick = () => toggleKeyword(kw.id);
+                btn.className = `px-2.5 py-1 rounded-lg border text-xs font-medium transition select-none ${
+                    kw.active
+                        ? 'chip-active'
+                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-300'
+                }`;
+                btn.textContent = (kw.active ? '✓ ' : '+ ') + kw.label;
+                container.appendChild(btn);
+            });
+        }
+
+        function toggleKeyword(id) {
+            const target = PRESET_KEYWORDS.find(k => k.id === id);
+            if (target) {
+                target.active = !target.active;
+                renderKeywordChips();
+                generatePitch();
+            }
+        }
+
+        function clearKeywords() {
+            PRESET_KEYWORDS.forEach(k => k.active = false);
+            document.getElementById('customKeywords').value = '';
+            renderKeywordChips();
+            generatePitch();
+        }
+
+        function getActiveKeywordState() {
+            const activeIds = new Set(PRESET_KEYWORDS.filter(k => k.active).map(k => k.id));
+            const customRaw = document.getElementById('customKeywords').value.trim();
+            const customList = customRaw
+                ? customRaw.split(',').map(s => s.trim()).filter(Boolean)
+                : [];
+            return { activeIds, customList };
+        }
+
+        // --- 5. DYNAMIC PITCH GENERATOR ENGINE ---
+        function generatePitch() {
+            const rawCompany = document.getElementById('companyName').value.trim();
+            const company = rawCompany || 'your engineering';
+            const companyTitle = rawCompany || 'Hiring';
+            const role = document.getElementById('roleTitle').value.trim() || 'Software Engineering Intern';
+            const location = document.getElementById('jobLocation').value.trim();
+            const { activeIds, customList } = getActiveKeywordState();
+
+            // Build dynamic skill callout list
+            const skillPhrases = [];
+            if (activeIds.has('python')) skillPhrases.push('Python');
+            if (activeIds.has('ts')) skillPhrases.push('TypeScript/JavaScript');
+            if (activeIds.has('react')) skillPhrases.push('React/Next.js');
+            if (activeIds.has('node')) skillPhrases.push('Node.js/Express');
+            if (activeIds.has('rest')) skillPhrases.push('REST APIs & Git');
+            if (activeIds.has('cpp')) skillPhrases.push('C++17 & Multithreading');
+            if (activeIds.has('ai')) skillPhrases.push('AI/ML & Autonomous Agents');
+            customList.forEach(c => skillPhrases.push(c));
+
+            const skillsLine = skillPhrases.length > 0
+                ? skillPhrases.join(', ')
+                : 'TypeScript/Node.js, Python, React/Next.js, C++17, and AI/ML';
+
+            // Dynamically order Abhinav's 4 core proof bullets based on selected keywords
+            const bullets = [
+                {
+                    id: 'voicecode',
+                    score: (activeIds.has('ts') ? 3 : 0) + (activeIds.has('ai') ? 3 : 0) + (activeIds.has('node') ? 2 : 0),
+                    text: `• VoiceCode (TypeScript, Node.js, Gemini API, Ollama): Built an autonomous coding agent running a bounded plan-execute-verify-repair loop with schema-constrained JSON generation, a deterministic rollback journal, and 40+ automated unit/integration tests.`
+                },
+                {
+                    id: 'agentops',
+                    score: (activeIds.has('react') ? 4 : 0) + (activeIds.has('ai') ? 2 : 0) + (activeIds.has('ts') ? 2 : 0),
+                    text: `• Agent Ops (React, Next.js, Node.js, WebSockets, Groq API): Architected a full-stack agentic AI workflow platform using a ReAct-style execution loop, real-time React Flow state visualization, and resilient rate-limit backoff.`
+                },
+                {
+                    id: 'internships',
+                    score: (activeIds.has('node') ? 4 : 0) + (activeIds.has('rest') ? 4 : 0) + (activeIds.has('react') ? 2 : 0),
+                    text: `• Production Internships (Node.js, Express, REST APIs, Full-Stack): Spearheaded backend architecture for a Tally Prime server synchronization tool at IITian Craft (cutting sync latency by 40%) and engineered full-stack supply chain workflows as a Tech Intern at Dairywala.`
+                },
+                {
+                    id: 'aiml_cpp',
+                    score: (activeIds.has('python') ? 4 : 0) + (activeIds.has('cpp') ? 5 : 0) + (activeIds.has('ai') ? 2 : 0),
+                    text: `• AI/ML Research & Systems Depth (Python, FastAPI, C++17): Published research on Temporal Fusion Transformers for Multi-Horizon Probabilistic Forecasting (Zenodo DOI: 10.5281/zenodo.19260001) and built a high-concurrency C++17 multithreaded file processing engine.`
+                }
+            ];
+
+            bullets.sort((a, b) => b.score - a.score);
+            const orderedBulletsText = bullets.map(b => b.text).join('\n');
+
+            // Build logistics / availability lines based on active chips
+            const logisticsLines = [];
+            if (activeIds.has('six_months')) {
+                logisticsLines.push(`• Duration & Mode: Available for a full 6-month internship in remote, hybrid, or onsite${location ? ` (${location})` : ''} mode.`);
+            } else if (location) {
+                logisticsLines.push(`• Location & Mode: Readily available for onsite/hybrid (${location}) or remote roles.`);
+            }
+            if (activeIds.has('us_aus_tz')) {
+                logisticsLines.push(`• Working Hours: Fully comfortable working overlapping hours with US, Europe, and Australia time zones.`);
+            }
+            if (activeIds.has('immediate')) {
+                logisticsLines.push(`• Start Date: Available to start immediately and ship production code from day one.`);
+            }
+
+            const logisticsBlock = logisticsLines.length > 0
+                ? `\nAvailability & Logistics:\n${logisticsLines.join('\n')}\n`
+                : '';
+
+            let subject = '';
+            let body = '';
+
+            if (currentStyle === 'yc') {
+                subject = `Engineering @ ${rawCompany || 'Your Team'} — Shipping ${skillPhrases.slice(0, 2).join(' & ') || 'Agentic AI & Backends'} (IIIT Manipur)`;
+                body = `Hi ${companyTitle} team,
+
+Saw your opening for the ${role} role${rawCompany ? ` at ${rawCompany}` : ''}—reaching out directly because I love shipping production software across ${skillsLine}.
+
+I'm a final-year CS undergrad at IIIT Manipur (2027 batch, 8.89 CGPA) and spend most of my time building autonomous AI agents and high-concurrency backends from scratch:
+
+${orderedBulletsText}
+${logisticsBlock}
+I've attached my resume. Happy to build a quick prototype or tackle a backlog ticket this week to show how fast I ship.
+
+Best,
+Abhinav Kumar Jha
+B.Tech CSE, IIIT Manipur (CGPA: 8.89 / 10.0)
+Phone: +91-8287244296
+GitHub: https://github.com/Abhinav4518/
+LinkedIn: https://www.linkedin.com/in/abhinav-kumar-jha-912426330/`;
+            } else if (currentStyle === 'delhi') {
+                subject = `Application for ${role} (${location || 'Delhi NCR'}) | Abhinav Kumar Jha (IIIT Manipur, 8.89 CGPA)`;
+                body = `Hi ${companyTitle} Hiring Team,
+
+I am a Software Engineer from Delhi (currently in my final year of B.Tech CSE at IIIT Manipur, 2027 batch, 8.89 CGPA) reaching out regarding the ${role} opportunity${rawCompany ? ` at ${rawCompany}` : ''}.
+
+With hands-on experience across ${skillsLine}, I can start contributing to your engineering team without needing to be walked through every step:
+
+${orderedBulletsText}
+${logisticsBlock}
+Being from Delhi, I am readily available for in-office, hybrid (${location || 'Delhi NCR / Noida / Gurugram'}), or remote roles. I have attached my resume for your review and would love to chat if my background aligns with your team's needs.
+
+Best regards,
+Abhinav Kumar Jha
+Delhi, India | B.Tech CSE, IIIT Manipur (CGPA: 8.89 / 10.0)
+Phone: +91-8287244296
+GitHub: https://github.com/Abhinav4518/
+LinkedIn: https://www.linkedin.com/in/abhinav-kumar-jha-912426330/`;
+            } else {
+                // Default: Referral / JD Match (e.g. Aiqon style)
+                subject = `Application for ${role} (2027 Batch) — Abhinav Kumar Jha (IIIT Manipur, 8.89 CGPA)`;
+                body = `Hi ${companyTitle} Hiring Team,
+
+I am a final-year B.Tech CSE student at IIIT Manipur (2027 batch, 8.89 CGPA) applying for the ${role} role${rawCompany ? ` at ${rawCompany}` : ''}${location ? ` (${location})` : ''}.
+
+You mentioned looking for an engineer with strong hands-on skills in ${skillsLine} who can write working software independently and ship real projects. Here is what I have built and shipped recently:
+
+${orderedBulletsText}
+${logisticsBlock}
+I have attached my resume for your review. You can also inspect my code and shipped projects directly on my GitHub below. Looking forward to hearing from you!
+
+Best regards,
+Abhinav Kumar Jha
+B.Tech CSE, IIIT Manipur (CGPA: 8.89 / 10.0)
+Phone: +91-8287244296
+GitHub: https://github.com/Abhinav4518/
+LinkedIn: https://www.linkedin.com/in/abhinav-kumar-jha-912426330/`;
+            }
+
+            document.getElementById('emailSubject').value = subject;
+            document.getElementById('emailBody').value = body;
+        }
+
+        // --- 6. PRESET EXAMPLE LOADER (AIQON) ---
+        function loadAiqonExample() {
+            companyManuallyEdited = false;
+            document.getElementById('targetEmail').value = 'info@aiqon.in';
+            document.getElementById('companyName').value = 'Aiqon';
+            document.getElementById('jobLocation').value = 'Hyderabad';
+            document.getElementById('roleTitle').value = 'Software Engineering Intern';
+            document.getElementById('customKeywords').value = '';
+
+            const aiqonSet = new Set(['ts', 'python', 'react', 'node', 'ai', 'rest', 'six_months', 'us_aus_tz']);
+            PRESET_KEYWORDS.forEach(k => {
+                k.active = aiqonSet.has(k.id);
+            });
+            currentStyle = 'referral';
+            renderKeywordChips();
+            updateStyleButtons();
+            generatePitch();
+        }
+
+        // --- 7. CHECK LOCAL PYTHON SMTP BRIDGE (`http://localhost:5000/status`) ---
+        async function checkBackendStatus(showFeedback = false) {
+            const dot = document.getElementById('bridgeDot');
+            const text = document.getElementById('bridgeText');
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 1800);
+                const res = await fetch('http://localhost:5000/status', { signal: controller.signal });
+                clearTimeout(timeoutId);
+                const data = await res.json();
+                if (data && data.ok) {
+                    backendOnline = true;
+                    dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400';
+                    text.textContent = data.resume_found
+                        ? 'Local SMTP Online (PDF Ready)'
+                        : 'SMTP Online (Missing PDF!)';
+                    if (showFeedback) showToast('Connected to local Python SMTP bridge on port 5000!', 'success');
+                    return true;
+                }
+            } catch (err) {
+                backendOnline = false;
+                dot.className = 'w-2 h-2 rounded-full bg-amber-400';
+                text.textContent = 'Local SMTP Offline (Gmail Mode)';
+                if (showFeedback) {
+                    showToast('Local server not running on port 5000. Click "1-Click SMTP Bridge" to start it, or use "Open in Gmail".', 'info');
+                }
+            }
+            return false;
+        }
+
+        // --- 8. SEND EMAIL ACTION (LOCAL SMTP BRIDGE OR GMAIL FALLBACK) ---
+        async function sendEmailNow() {
+            const to = document.getElementById('targetEmail').value.trim();
+            const company = document.getElementById('companyName').value.trim() || inferCompanyFromEmail(to) || 'Startup';
+            const role = document.getElementById('roleTitle').value.trim();
+            const subject = document.getElementById('emailSubject').value.trim();
+            const body = document.getElementById('emailBody').value.trim();
+
+            if (!to || !to.includes('@')) {
+                showToast('Please enter a valid recipient email address first.', 'error');
+                document.getElementById('targetEmail').focus();
+                return;
+            }
+
+            const btn = document.getElementById('sendDirectBtn');
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Sending to ${to}...</span>`;
+            lucide.createIcons();
+
+            const isOnline = await checkBackendStatus(false);
+
+            if (isOnline) {
+                try {
+                    const res = await fetch('http://localhost:5000/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ to, subject, body })
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.ok) {
+                        showToast(`Sent email + PDF resume to ${to}!`, 'success');
+                        recordHistory(to, company, role, 'SMTP + PDF Sent');
+                    } else {
+                        showToast(`SMTP Error: ${data.error || 'Failed to send'}`, 'error');
+                    }
+                } catch (err) {
+                    showToast('Could not reach localhost:5000. Opening Gmail Compose instead...', 'info');
+                    openInGmailCompose();
+                }
+            } else {
+                // If local Python bridge isn't running yet, open Gmail Web Compose pre-filled and remind user
+                openInGmailCompose();
+                showToast('Opened pre-filled Gmail Compose! (Run mailer_server.py for 1-click background PDF sending)', 'info');
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+            lucide.createIcons();
+        }
+
+        function openInGmailCompose() {
+            const to = document.getElementById('targetEmail').value.trim();
+            const company = document.getElementById('companyName').value.trim() || inferCompanyFromEmail(to) || 'Startup';
+            const role = document.getElementById('roleTitle').value.trim();
+            const subject = document.getElementById('emailSubject').value.trim();
+            const body = document.getElementById('emailBody').value.trim();
+
+            if (!to) {
+                showToast('Please enter a recipient email address first.', 'error');
+                document.getElementById('targetEmail').focus();
+                return;
+            }
+
+            const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.open(gmailUrl, '_blank');
+            recordHistory(to, company, role, 'Gmail Compose');
+        }
+
+        // --- 9. HISTORY TRACKING IN LOCALSTORAGE ---
+        function getHistory() {
+            try {
+                return JSON.parse(localStorage.getItem('abhinav_outreach_history') || '[]');
+            } catch {
+                return [];
+            }
+        }
+
+        function recordHistory(email, company, role, status) {
+            const { activeIds, customList } = getActiveKeywordState();
+            const kwSummary = [
+                ...PRESET_KEYWORDS.filter(k => activeIds.has(k.id)).map(k => k.label),
+                ...customList
+            ].slice(0, 4).join(', ');
+
+            const list = getHistory();
+            list.unshift({
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                email,
+                company,
+                role,
+                keywords: kwSummary || 'Standard Stack',
+                status
+            });
+            localStorage.setItem('abhinav_outreach_history', JSON.stringify(list.slice(0, 50)));
+            renderHistoryTable();
+        }
+
+        function renderHistoryTable() {
+            const list = getHistory();
+            const tbody = document.getElementById('historyTableBody');
+            document.getElementById('sentCountBadge').textContent = list.length;
+
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500 text-xs">No emails dispatched yet in this session. Enter an email above and click Send!</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.map(item => `
+                <tr class="hover:bg-slate-800/40 transition">
+                    <td class="py-2.5 px-3 font-mono text-xs text-slate-400">${item.time}</td>
+                    <td class="py-2.5 px-3 font-mono text-xs text-emerald-400">${item.email}</td>
+                    <td class="py-2.5 px-3 font-medium text-white">${item.company}</td>
+                    <td class="py-2.5 px-3 text-slate-300">${item.role}</td>
+                    <td class="py-2.5 px-3 text-xs text-slate-400">${item.keywords}</td>
+                    <td class="py-2.5 px-3">
+                        <span class="px-2 py-0.5 rounded-full text-[11px] font-medium ${
+                            item.status.includes('SMTP')
+                                ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                                : 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
+                        }">${item.status}</span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function clearHistoryLog() {
+            localStorage.removeItem('abhinav_outreach_history');
+            renderHistoryTable();
+            showToast('Cleared outreach history log.', 'info');
+        }
+
+        // --- 10. UTILITIES (MODAL, CLIPBOARD, TOASTS) ---
+        function toggleServerModal(show) {
+            const modal = document.getElementById('serverModal');
+            if (show) {
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function copyText(elementId, message) {
+            const el = document.getElementById(elementId);
+            el.select();
+            document.execCommand('copy');
+            showToast(message, 'success');
+        }
+
+        function copyRawText(str, message) {
+            const temp = document.createElement('textarea');
+            temp.value = str;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            showToast(message, 'success');
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const colorClasses = type === 'success'
+                ? 'bg-emerald-950/95 border-emerald-500/50 text-emerald-200'
+                : type === 'error'
+                ? 'bg-rose-950/95 border-rose-500/50 text-rose-200'
+                : 'bg-slate-900/95 border-cyan-500/40 text-slate-200';
+
+            toast.className = `pointer-events-auto px-4 py-3 rounded-xl border shadow-xl text-xs font-medium flex items-center justify-between gap-3 transition-all duration-300 ${colorClasses}`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3800);
+        }
+    </script>
+</body>
+</html>
